@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 function Prescriptions() {
-
   const [prescriptions, setPrescriptions] = useState([]);
 
   const [prescription, setPrescription] = useState({
@@ -16,114 +15,77 @@ function Prescriptions() {
 
   const [loading, setLoading] = useState(false);
 
-  
-
   const getPrescriptions = async () => {
-
     try {
-
-      const response = await axios.get(
-        "http://localhost:5000/api/prescriptions"
-      );
+      const response = await api.get("/prescriptions");
 
       if (response.data.success) {
         setPrescriptions(response.data.data);
       }
-
     } catch (error) {
-
-      console.log(error);
-
+      console.log("Get Prescriptions Error:", error);
     }
-
   };
 
   useEffect(() => {
-
     getPrescriptions();
-
   }, []);
 
- 
-
   const handleChange = (e) => {
-
     setPrescription({
-
       ...prescription,
       [e.target.name]: e.target.value
-
     });
-
   };
 
- 
-
   const addPrescription = async (e) => {
-
     e.preventDefault();
 
     try {
-
       setLoading(true);
 
-      const response = await axios.post(
+      const response = await api.post("/prescriptions", {
+        ...prescription,
+        patientId: Number(prescription.patientId),
+        doctorId: Number(prescription.doctorId)
+      });
 
-        "http://localhost:5000/api/prescriptions",
-
-        {
-          ...prescription,
-          patientId: Number(prescription.patientId),
-          doctorId: Number(prescription.doctorId)
-        }
-
+      alert(
+        response.data.message ||
+        "Prescription Added Successfully"
       );
 
-      console.log(response.data);
-
-      alert("Prescription Added Successfully");
-
       setPrescription({
-
         patientId: "",
         doctorId: "",
         medicineName: "",
         dosage: "",
         duration: "",
         instructions: ""
-
       });
 
-      getPrescriptions();
-
+      await getPrescriptions();
     } catch (error) {
-
       console.log(error.response?.data || error.message);
 
       alert(
         error.response?.data?.message ||
         "Prescription Add Failed"
       );
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   return (
-
     <div className="container mt-4">
-
       <h2>💊 Prescription Management</h2>
-
       <hr />
 
       <form onSubmit={addPrescription}>
-
-  <input
+        <input
+          type="number"
+          min="1"
           className="form-control mb-2"
           name="patientId"
           placeholder="Patient ID"
@@ -133,6 +95,8 @@ function Prescriptions() {
         />
 
         <input
+          type="number"
+          min="1"
           className="form-control mb-2"
           name="doctorId"
           placeholder="Doctor ID"
@@ -178,13 +142,11 @@ function Prescriptions() {
 
         <button
           className="btn btn-success"
+          type="submit"
           disabled={loading}
         >
-
           {loading ? "Saving..." : "Add Prescription"}
-
         </button>
-
       </form>
 
       <hr />
@@ -192,11 +154,8 @@ function Prescriptions() {
       <h3>Prescription List</h3>
 
       <table className="table table-bordered">
-
         <thead className="table-dark">
-
           <tr>
-
             <th>ID</th>
             <th>Patient ID</th>
             <th>Doctor ID</th>
@@ -204,55 +163,33 @@ function Prescriptions() {
             <th>Dosage</th>
             <th>Duration</th>
             <th>Instructions</th>
-
           </tr>
-
         </thead>
 
         <tbody>
-
-          {
-
-            prescriptions.length > 0 ?
-
-              prescriptions.map((p) => (
-
-                <tr key={p.id}>
-
-                  <td>{p.id}</td>
-                  <td>{p.patientId}</td>
-                  <td>{p.doctorId}</td>
-                  <td>{p.medicineName}</td>
-                  <td>{p.dosage}</td>
-                  <td>{p.duration}</td>
-                  <td>{p.instructions}</td>
-
-                </tr>
-
-              ))
-
-              :
-
-              <tr>
-
-                <td colSpan="7" className="text-center">
-
-                  No Prescriptions Found
-
-                </td>
-
+          {prescriptions.length > 0 ? (
+            prescriptions.map((p) => (
+              <tr key={p.id}>
+                <td>{p.id}</td>
+                <td>{p.patientId}</td>
+                <td>{p.doctorId}</td>
+                <td>{p.medicineName}</td>
+                <td>{p.dosage}</td>
+                <td>{p.duration}</td>
+                <td>{p.instructions}</td>
               </tr>
-
-          }
-
+            ))
+          ) : (
+            <tr>
+              <td colSpan="7" className="text-center">
+                No Prescriptions Found
+              </td>
+            </tr>
+          )}
         </tbody>
-
       </table>
-
     </div>
-
   );
-
 }
 
 export default Prescriptions;
